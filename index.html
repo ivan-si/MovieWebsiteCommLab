@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Create a Painting</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.2/min/tiny-slider.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.2/tiny-slider.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            cursor: none;
+            background: #1a1a1a;
+        }
+
+        .img_container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+        }
+
+        #mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #paint-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        #cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        .paint-dot {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: opacity 1s;
+        }
+
+        #content {
+            position: relative;
+            z-index: 1;
+        }
+
+        nav {
+            background: rgba(26, 26, 26, 0.95);
+            padding: 1.5rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            list-style: none;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #ff5252;
+            transition: width 0.3s;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        .container {
+            max-width: 1200px;
+            /* Adjust margin to account for nav bar and add space at bottom */
+            margin: 7rem auto 8rem;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .final-painting {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            border: 3px solid rgba(255, 82, 82, 0.3);
+        }
+
+        /* Home Page Styles */
+        .hero {
+            text-align: center;
+            padding: 6rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 82, 82, 0.1), transparent);
+            z-index: 0;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            color: #fff;
+            position: relative;
+            text-shadow: 0 0 20px rgba(255, 82, 82, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 3rem;
+            color: rgba(255, 255, 255, 0.8);
+            position: relative;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .play-btn {
+            padding: 1.2rem 4rem;
+            font-size: 1.2rem;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 82, 82, 0.3);
+        }
+
+        .play-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .play-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        /* Movie Page Styles */
+        .movie-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* About Page Styles */
+        .crew-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .crew-member {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .crew-member:hover {
+            transform: translateY(-5px);
+        }
+
+        .crew-member img {
+            width: 200px;
+            height: 200px;
+            border-radius: 20px;
+            object-fit: cover;
+            margin-bottom: 1.5rem;
+            border: 3px solid rgba(255, 82, 82, 0.3);
+        }
+
+        .crew-member h3 {
+            margin-bottom: 0.5rem;
+            color: #fff;
+            font-size: 1.4rem;
+        }
+
+        .crew-member .role {
+            color: #ff5252;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .crew-member p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+        }
+
+        /* Behind the Scenes Styles */
+        .carousel-container {
+            margin: 0 auto;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .carousel-slide img {
+            width: 100%;
+            height: 600px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .tns-nav {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .tns-nav button {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            margin: 0 5px;
+            transition: background 0.3s;
+        }
+
+        .tns-nav button.tns-nav-active {
+            background: #ff5252;
+        }
+
+        #pages>div {
+            display: none;
+        }
+
+        #pages>div.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .active {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .reveal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .reveal-img-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+        }
+
+        .image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .top-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mask-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            display: none;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 26, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            /* Added to support transition */
+            transition: opacity 2s;
+            /* Added to support transition */
+        }
+
+        .overlay-text {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 24px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            text-align: center;
+            background: rgba(255, 82, 82, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        #startButton {
+            padding: 1.2rem 4rem;
+            font-size: 1.2rem;
+            background: #ff5252;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+            z-index: 2000;
+        }
+
+        #startButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 82, 82, 0.3);
+        }
+
+        #startButton::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        #startButton:hover::before {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="paint-layer"></div>
+    <div id="cursor"></div>
+    <div id="content"></div>
+
+    <nav>
+        <ul>
+            <li><a href="#" onclick="showPage('home')">Home</a></li>
+            <li><a href="#" onclick="showPage('movie')">Movie</a></li>
+            <li><a href="#" onclick="showPage('about')">About</a></li>
+            <li><a href="#" onclick="showPage('behind')">Behind the Scenes</a></li>
+        </ul>
+    </nav>
+
+    <div id="pages">
+        <div id="home" class="active">
+            <div class="container">
+                <div class="hero">
+                    <h1>How to Create a Painting</h1>
+                    <p>Embark on a journey through color and creativity as we explore the art of painting. This
+                        comprehensive guide will transform your artistic vision into reality, whether you're a beginner
+                        or an experienced artist looking to refine your craft.</p>
+                    <button class="play-btn" onclick="showPage('movie')">Watch Now</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="movie">
+            <div class="reveal-container">
+                <button id="startButton">Begin Experience</button>
+
+                <div class="video-container">
+                    <video id="video1" src="media/Scene_1.mp4"></video>
+                    <video id="video2" src="media/Scene_2.mp4"></video>
+                    <video id="video3" src="media/Scene_3.mp4"></video>
+                    <video id="video4" src="media/Scene_4.mp4"></video>
+                </div>
+
+                <div class="overlay" id="overlay1">
+                    <div class="reveal-img-container">
+                        <img class="image" src="media/canvas_white.jpg" alt="Canvas White" />
+                        <img class="top-image" src="media/canvas_white.jpg" alt="Canvas Raw" />
+                        <canvas class="mask-canvas" id="mask1"></canvas>
+                        <div class="overlay-text">Reveal the blank canvas...</div>
+                    </div>
+                </div>
+
+                <div class="overlay" id="overlay2">
+                    <div class="reveal-img-container">
+                        <img class="image" src="media/sketch.jpg" alt="Sketch" />
+                        <img class="top-image" src="media/sketch.jpg" alt="Canvas White" />
+                        <canvas class="mask-canvas" id="mask2"></canvas>
+                        <div class="overlay-text">Discover the initial sketch...</div>
+                    </div>
+                </div>
+
+                <div class="overlay" id="overlay3">
+                    <div class="reveal-img-container">
+                        <img class="image" src="media/final_painting.jpg" alt="Final Painting" />
+                        <img class="top-image" src="media/final_painting.JPG" alt="Sketch" />
+                        <canvas class="mask-canvas" id="mask3"></canvas>
+                        <div class="overlay-text">Unveil the masterpiece...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="about">
+            <div class="container">
+                <div class="crew-container">
+                    <div class="crew-container">
+                        <div class="crew-member">
+                            <img src="media/amina.jpg" alt="Amina Magomedova">
+                            <h3>Amina Magomedova</h3>
+                            <p class="role">Video Production</p>
+                            <p>Collaborative video producer working alongside Haroon to capture and edit the artistic
+                                process with precision and creativity.</p>
+                        </div>
+                        <div class="crew-member">
+                            <img src="media/ivan.jpg" alt="Ivan Sidorenko">
+                            <h3>Ivan Sidorenko</h3>
+                            <p class="role">Sound Production & Website Design</p>
+                            <p>Multi-talented creative responsible for audio engineering and developing the interactive
+                                web experience.</p>
+                        </div>
+                        <div class="crew-member">
+                            <img src="media/violetta.jpg" alt="Violetta Li">
+                            <h3>Violetta Li</h3>
+                            <p class="role">Interviewer & Video Editing</p>
+                            <p>Skilled interviewer and editor who guides conversations to uncover insights while
+                                crafting the final narrative through thoughtful video editing.</p>
+                        </div>
+                        <div class="crew-member">
+                            <img src="media/haroon.jpg" alt="Haroon Shafi">
+                            <h3>Haroon Shafi</h3>
+                            <p class="role">Video Production</p>
+                            <p>Expert videographer working with Amina to document and present the artistic journey
+                                through compelling visuals.</p>
+                        </div>
+                        <div class="crew-member">
+                            <img src="media/bruna.jpg" alt="Bruna Pereira">
+                            <h3>Bruna Pereira</h3>
+                            <p class="role">Painter/Interviewee</p>
+                            <p>Talented artist sharing her expertise and creative process, demonstrating painting
+                                techniques and insights.</p>
+                        </div>
+                        <div class="crew-member">
+                            <img src="media/final_painting.jpg" alt="Final Painting" class="final-painting">
+                            <h3>The Final Masterpiece</h3>
+                            <p class="role">Artwork</p>
+                            <p>The culmination of artistic vision and technical expertise, representing the journey from
+                                blank canvas to finished painting.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="behind">
+            <div class="container">
+                <div class="carousel-container">
+                    <div class="my-slider">
+                        <div class="carousel-slide">
+                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 1">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 2">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 3">
+                        </div>
+                        <div class="carousel-slide">
+                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 4">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cursor = document.getElementById('cursor');
+        const paintLayer = document.getElementById('paint-layer');
+        let lastX = 0;
+        let lastY = 0;
+        let isFirstMove = true;
+
+        function getRandomOffset() {
+            return (Math.random() - 0.5) * 40; // Random offset ±20px
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+
+            if (isFirstMove) {
+                lastX = e.clientX;
+                lastY = e.clientY;
+                isFirstMove = false;
+                return;
+            }
+
+            const distance = Math.hypot(e.clientX - lastX, e.clientY - lastY);
+            const numDots = Math.floor(distance / 3); // More frequent dots
+
+            for (let i = 0; i < numDots; i++) {
+                const ratio = i / numDots;
+                const x = lastX + (e.clientX - lastX) * ratio;
+                const y = lastY + (e.clientY - lastY) * ratio;
+
+                const dot = document.createElement('div');
+                dot.className = 'paint-dot';
+
+                // Add random positioning offset
+                const offsetX = getRandomOffset();
+                const offsetY = getRandomOffset();
+                dot.style.left = (x + offsetX) + 'px';
+                dot.style.top = (y + offsetY) + 'px';
+
+                // More varied size range
+                const size = 4 + Math.random() * 20; // Random size between 4px and 24px
+                dot.style.width = size + 'px';
+                dot.style.height = size + 'px';
+
+                // Red color variations
+                const hue = 0 + Math.random() * 10; // Slight hue variation
+                const saturation = 70 + Math.random() * 30; // More saturation variation
+                const lightness = 40 + Math.random() * 30; // More lightness variation
+                const opacity = 0.4 + Math.random() * 0.4; // Random opacity
+                dot.style.backgroundColor = `hsla(${hue}, ${saturation}%, ${lightness}%, ${opacity})`;
+
+                paintLayer.appendChild(dot);
+
+                // Random fade duration
+                const fadeDuration = 800 + Math.random() * 400;
+                dot.style.transition = `opacity ${fadeDuration}ms`;
+
+                setTimeout(() => {
+                    dot.style.opacity = '0';
+                    setTimeout(() => dot.remove(), fadeDuration);
+                }, 100);
+            }
+
+            lastX = e.clientX;
+            lastY = e.clientY;
+        });
+
+        // Page navigation function
+        function showPage(pageId) {
+            // Remove active class from all pages
+            document.querySelectorAll('#pages > div').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Add active class to selected page
+            document.getElementById(pageId).classList.add('active');
+
+            // Initialize slider if on behind-the-scenes page
+            if (pageId === 'behind' && !window.slider) {
+                window.slider = tns({
+                    container: '.my-slider',
+                    items: 1,
+                    slideBy: 'page',
+                    autoplay: true,
+                    controls: true,
+                    nav: true,
+                    autoplayButtonOutput: false
+                });
+            }
+        }
+
+        // Reveal experience script
+        const startButton = document.getElementById('startButton');
+        const video1 = document.getElementById('video1');
+        const video2 = document.getElementById('video2');
+        const video3 = document.getElementById('video3');
+        const video4 = document.getElementById('video4');
+        const overlay1 = document.getElementById('overlay1');
+        const overlay2 = document.getElementById('overlay2');
+        const overlay3 = document.getElementById('overlay3');
+
+        startButton.addEventListener('click', function () {
+            startButton.style.display = 'none';
+            video1.style.display = 'block';
+            video1.play().catch(e => console.error("Video playback error:", e));
+        });
+
+        video1.addEventListener('ended', function () {
+            video1.style.display = 'none';
+            video2.style.display = 'block';
+            video2.play().catch(e => console.error("Video playback error:", e));
+        });
+
+        video2.addEventListener('ended', function () {
+            video2.style.display = 'none';
+            overlay1.style.display = 'flex';
+            setupReveal(overlay1, 'mask1', () => {
+                video3.style.display = 'block';
+                video3.play().catch(e => console.error("Video playback error:", e));
+            });
+        });
+
+        video3.addEventListener('ended', function () {
+            video3.style.display = 'none';
+            overlay2.style.display = 'flex';
+            setupReveal(overlay2, 'mask2', () => {
+                video4.style.display = 'block';
+                video4.play().catch(e => console.error("Video playback error:", e));
+            });
+        });
+
+        video4.addEventListener('ended', function () {
+            video4.style.display = 'none';
+            overlay3.style.display = 'flex';
+            setupReveal(overlay3, 'mask3');
+        });
+
+        function setupReveal(overlay, maskId, onComplete) {
+            const canvas = document.getElementById(maskId);
+            const ctx = canvas.getContext('2d');
+            const img_container = canvas.parentElement;
+
+            function resizeCanvas() {
+                canvas.width = img_container.offsetWidth;
+                canvas.height = img_container.offsetHeight;
+                ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            resizeCanvas();
+
+            let isRevealed = false;
+            let revealedPixels = 0;
+            const totalPixels = canvas.width * canvas.height;
+
+            function getMousePos(evt) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: evt.clientX - rect.left,
+                    y: evt.clientY - rect.top
+                };
+            }
+
+            function revealArea(x, y) {
+                const radius = 50;
+                ctx.globalCompositeOperation = 'destination-out';
+
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                revealedPixels = 0;
+
+                for (let i = 3; i < imageData.data.length; i += 4) {
+                    if (imageData.data[i] === 0) revealedPixels++;
+                }
+
+                const percentRevealed = (revealedPixels / totalPixels) * 100;
+                if (percentRevealed > 60 && !isRevealed) {
+                    isRevealed = true;
+                    canvas.style.transition = 'opacity 2s'; // Slower fade out (2 seconds)
+                    canvas.style.opacity = '0';
+
+                    // Wait 3 seconds after the reveal before proceeding
+                    setTimeout(() => {
+                        overlay.style.transition = 'opacity 2s'; // Smooth fade out for overlay
+                        overlay.style.opacity = '0';
+
+                        setTimeout(() => {
+                            overlay.style.display = 'none';
+                            if (onComplete) onComplete();
+                        }, 2000); // Wait for overlay fade to complete
+                    }, 3000); // Linger time after reveal
+                }
+            }
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isRevealed) {
+                    const pos = getMousePos(e);
+                    revealArea(pos.x, pos.y);
+                }
+            });
+        }
+    </script>
+</body>
