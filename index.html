@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: Helvetica, Arial, sans-serif;
         }
 
         body {
@@ -275,6 +275,106 @@
             border-radius: 20px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            /* Added for absolute positioning of buttons */
+        }
+
+        /* Carousel Navigation Buttons */
+        .tns-controls {
+            position: absolute;
+            width: 100%;
+            height: 0;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            pointer-events: none;
+            /* Ensures buttons work while container doesn't interfere */
+            z-index: 10;
+        }
+
+        .tns-controls button {
+            position: absolute;
+            background: rgba(255, 82, 82, 0.9);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            /* Re-enable pointer events for buttons */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tns-controls button:first-child {
+            left: -25px;
+        }
+
+        .tns-controls button:last-child {
+            right: -25px;
+        }
+
+        .tns-controls button:hover {
+            background: rgba(255, 82, 82, 1);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 82, 82, 0.4);
+        }
+
+        .tns-controls button::before {
+            content: '';
+            width: 15px;
+            height: 15px;
+            border-top: 3px solid white;
+            border-right: 3px solid white;
+            display: block;
+        }
+
+        .tns-controls button:first-child::before {
+            transform: rotate(-135deg);
+            margin-left: 5px;
+        }
+
+        .tns-controls button:last-child::before {
+            transform: rotate(45deg);
+            margin-right: 5px;
+        }
+
+        /* Update nav dots to match theme */
+        .tns-nav {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .tns-nav button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 0 5px;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .tns-nav button:hover {
+            background: rgba(255, 82, 82, 0.5);
+        }
+
+        .tns-nav button.tns-nav-active {
+            background: #ff5252;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);
+        }
+
+        /* Update slider container padding to account for buttons */
+        .my-slider {
+            padding: 0 30px;
         }
 
         .carousel-slide img {
@@ -282,26 +382,10 @@
             height: 600px;
             object-fit: cover;
             border-radius: 10px;
+            transition: transform 0.3s ease;
         }
 
-        .tns-nav {
-            text-align: center;
-            margin-top: 1rem;
-        }
 
-        .tns-nav button {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            border: none;
-            margin: 0 5px;
-            transition: background 0.3s;
-        }
-
-        .tns-nav button.tns-nav-active {
-            background: #ff5252;
-        }
 
         #pages>div {
             display: none;
@@ -392,9 +476,12 @@
             align-items: center;
             z-index: 1000;
             opacity: 1;
-            /* Added to support transition */
             transition: opacity 2s;
-            /* Added to support transition */
+        }
+
+        /* Add a new class for the final overlay */
+        #overlay3 {
+            transition: none;
         }
 
         .overlay-text {
@@ -404,7 +491,7 @@
             transform: translateX(-50%);
             color: #fff;
             font-size: 24px;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: Helvetica, Arial, sans-serif;
             text-align: center;
             background: rgba(255, 82, 82, 0.8);
             padding: 10px 20px;
@@ -572,16 +659,16 @@
                 <div class="carousel-container">
                     <div class="my-slider">
                         <div class="carousel-slide">
-                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 1">
+                            <img src="media/bts_1.jpeg" alt="Behind the Scenes 1">
                         </div>
                         <div class="carousel-slide">
-                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 2">
+                            <img src="media/bts_2.jpeg" alt="Behind the Scenes 2">
                         </div>
                         <div class="carousel-slide">
-                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 3">
+                            <img src="media/bts_3.jpeg" alt="Behind the Scenes 3">
                         </div>
                         <div class="carousel-slide">
-                            <img src="/api/placeholder/800/500" alt="Behind the Scenes 4">
+                            <img src="media/bts_4.jpeg" alt="Behind the Scenes 4">
                         </div>
                     </div>
                 </div>
@@ -675,7 +762,24 @@
                     autoplay: true,
                     controls: true,
                     nav: true,
-                    autoplayButtonOutput: false
+                    autoplayButtonOutput: false,
+                    controlsText: ['', ''], // Empty strings for custom arrows
+                    autoplayTimeout: 5000,
+                    speed: 800,
+                    loop: true,
+                    responsive: {
+                        640: {
+                            edgePadding: 20,
+                            gutter: 20,
+                            items: 1
+                        },
+                        700: {
+                            gutter: 30
+                        },
+                        900: {
+                            items: 1
+                        }
+                    }
                 });
             }
         }
@@ -775,19 +879,26 @@
                 const percentRevealed = (revealedPixels / totalPixels) * 100;
                 if (percentRevealed > 60 && !isRevealed) {
                     isRevealed = true;
-                    canvas.style.transition = 'opacity 2s'; // Slower fade out (2 seconds)
+                    canvas.style.transition = 'opacity 2s';
                     canvas.style.opacity = '0';
 
-                    // Wait 3 seconds after the reveal before proceeding
-                    setTimeout(() => {
-                        overlay.style.transition = 'opacity 2s'; // Smooth fade out for overlay
-                        overlay.style.opacity = '0';
-
+                    // Modified behavior for final overlay
+                    if (maskId === 'mask3') {
+                        // For the final image, just fade out the mask canvas
                         setTimeout(() => {
-                            overlay.style.display = 'none';
-                            if (onComplete) onComplete();
-                        }, 2000); // Wait for overlay fade to complete
-                    }, 3000); // Linger time after reveal
+                            canvas.style.display = 'none';
+                        }, 2000);
+                    } else {
+                        // For other overlays, proceed with original behavior
+                        setTimeout(() => {
+                            overlay.style.transition = 'opacity 2s';
+                            overlay.style.opacity = '0';
+                            setTimeout(() => {
+                                overlay.style.display = 'none';
+                                if (onComplete) onComplete();
+                            }, 2000);
+                        }, 3000);
+                    }
                 }
             }
 
